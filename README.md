@@ -53,6 +53,11 @@ To produce locally validated RL data:
 python examples/data_preprocess/coder1.py
 ```
 
+Download huggingface models:
+```bash
+python3 -c "import transformers; transformers.pipeline('text-generation', model='Qwen/Qwen2.5-7B-Instruct-1M')"
+```
+
 ### Run!
 
 ```bash
