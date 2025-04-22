@@ -116,3 +116,46 @@ If you find this work helpful...
 ## License
 
 Apache-2.0. See [LICENSE.code-r1](LICENSE.code-r1) for more details.
+
+## Troubleshooting
+
+### Issues on `firejail`
+
+One may get the following issue:
+```
+(main_task pid=18260) Failed to execute program: STDOUT:
+(main_task pid=18260) STDERR:
+(main_task pid=18260) Error: no profile with name "pip" found. 
+```
+
+We will need to manually add the pip profile. First check if there is any existing pip profile:
+```bash
+grep -r "pip.profile" . 
+sudo cp path/to/pip.profile /etc/firejail/pip.profile  # if so, add that profile 
+```
+Otherwise we can create a new one:
+```bash
+mkdir -p ~/.config/firejail
+vi ~/.config/firejail/pip.profile
+```
+Add the following content:
+```bash
+include /etc/firejail/disable-common.inc
+include /etc/firejail/disable-programs.inc
+
+private
+net none
+```
+This will:
+- Disable common risky paths and programs.
+- Use a private home directory.
+- Disable network access.
+
+Then test:
+```bash
+firejail --profile=pip python -c "print('test')"
+```
+And make a copy:
+```
+sudo cp ~/.config/firejail/pip.profile /etc/firejail/pip.profile
+```
