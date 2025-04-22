@@ -14,6 +14,7 @@ More results and findings to come...
 
 ```bash
 # For training
+git submodule update --init --recursive
 pip install -e .
 pip install vllm==0.7.3
 pip install flash-attn --no-build-isolation
