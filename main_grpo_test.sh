@@ -18,7 +18,7 @@ fi
 #    main_ppo.py:main_task - and comment "Role.RefPolicy..." in "role_worker_mapping = ".
 
 # MAIN CONFIG
-MAX_EPOCHS=8
+MAX_EPOCHS=1
 # DATASET=code-r1-12k
 DATASET=code-r1-2k-leetcode2k-taco
 MODEL_PATH=Qwen/Qwen2.5-7B-Instruct-1M
