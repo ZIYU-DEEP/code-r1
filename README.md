@@ -144,3 +144,10 @@ Then test with:
 python scripts/stress_exec.py
 python scripts/test_sandbox.py
 ```
+
+### Issues on `torch` and `vllm`
+Download torch on [https://pytorch.org/get-started/previous-versions/](https://pytorch.org/get-started/previous-versions/).
+For now, the `torch=2.4.0` and `vllm=0.6.3` works.
+```bash
+conda install pytorch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 pytorch-cuda=12.4 -c pytorch -c nvidia
+```
