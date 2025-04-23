@@ -75,6 +75,19 @@ To produce locally validated RL data:
 python examples/data_preprocess/coder1.py
 ```
 
+One may directly download from huggingface:
+```python
+import os
+from datasets import load_dataset
+
+target_folder = "data/code-r1-12k"
+os.makedirs(target_folder, exist_ok=True)
+
+dataset = load_dataset("ganler/code-r1-12k")
+dataset["train"].to_parquet(f"{target_folder}/train.parquet")
+dataset["test"].to_parquet(f"{target_folder}/test.parquet")
+```
+
 Download huggingface models:
 ```bash
 python3 -c "import transformers; transformers.pipeline('text-generation', model='Qwen/Qwen2.5-7B-Instruct-1M')"
