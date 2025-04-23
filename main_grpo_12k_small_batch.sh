@@ -19,8 +19,8 @@ fi
 #    main_ppo.py:main_task - and comment "Role.RefPolicy..." in "role_worker_mapping = ".
 
 # MAIN CONFIG
-PROJECT_NAME=code-r1-12k
-MAX_EPOCHS=8
+PROJECT_NAME=code-r1-12k-1epoch
+MAX_EPOCHS=1
 DATASET=code-r1-12k-leetcode2k-taco
 MODEL_PATH=Qwen/Qwen2.5-7B-Instruct-1M
 ROLLOUT_N_SAMPLE=16
@@ -28,6 +28,13 @@ ROLLOUT_N_QUERY=16
 MICRO_BATCH_PER_GPU=4 # * GPUS_PER_NODE -> GLOBAL_BATCH_SIZE
 GRAD_ACC_STEPS=8
 GLOBAL_BATCH_SIZE=$(($(($GPUS_PER_NODE * $MICRO_BATCH_PER_GPU)) * $GRAD_ACC_STEPS))
+
+# MEMORY RELATED CONFIGS (set all to FALSE for faster training if you have enough memory)
+MODEL_ENABLE_GRADIENT_CHECKPOINTING=True  # TRUE: reduce memory by activation, increase computation time
+ACTOR_PARAM_OFFLOAD=FALSE  # TRUE: reduce memory, good for nvlink
+ACTOR_OPTIMIZER_OFFLOAD=True  # TRUE: reduce memory, good for nvlink
+REF_PARAM_OFFLOAD=FALSE  # TRUE: reduce memory, but not much
+VLLM_GPU_MEMORY_UTILIZATION=0.45
 
 # assert ROLLOUT_N_QUERY * ROLLOUT_N_SAMPLE % GLOBAL_BATCH_SIZE == 0
 TOTAL_SAMPLES=$(( ROLLOUT_N_QUERY * ROLLOUT_N_SAMPLE ))
@@ -56,15 +63,15 @@ python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.actor.use_kl_loss=True \
     actor_rollout_ref.actor.kl_loss_coef=0.001 \
     actor_rollout_ref.actor.kl_loss_type=low_var_kl \
-    actor_rollout_ref.model.enable_gradient_checkpointing=False \
-    actor_rollout_ref.actor.fsdp_config.param_offload=False \
-    actor_rollout_ref.actor.fsdp_config.optimizer_offload=False \
+    actor_rollout_ref.model.enable_gradient_checkpointing=${MODEL_ENABLE_GRADIENT_CHECKPOINTING} \
+    actor_rollout_ref.actor.fsdp_config.param_offload=${ACTOR_PARAM_OFFLOAD} \
+    actor_rollout_ref.actor.fsdp_config.optimizer_offload=${ACTOR_OPTIMIZER_OFFLOAD} \
     actor_rollout_ref.rollout.log_prob_micro_batch_size=256 \
     actor_rollout_ref.rollout.name=vllm \
-    actor_rollout_ref.rollout.gpu_memory_utilization=0.5 \
+    actor_rollout_ref.rollout.gpu_memory_utilization=${VLLM_GPU_MEMORY_UTILIZATION} \
     actor_rollout_ref.rollout.n=$ROLLOUT_N_SAMPLE \
     actor_rollout_ref.ref.log_prob_micro_batch_size=256 \
-    actor_rollout_ref.ref.fsdp_config.param_offload=False \
+    actor_rollout_ref.ref.fsdp_config.param_offload=${REF_PARAM_OFFLOAD} \
     algorithm.kl_ctrl.kl_coef=0.001 \
     trainer.critic_warmup=0 \
     trainer.logger=['wandb'] \
