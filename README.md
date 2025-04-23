@@ -224,3 +224,67 @@ Potential fix:
 ```bash
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 ```
+
+However, this fix is temporary, and can only helps to train for more than 100 steps, then there is OOM again.
+
+Additionally, when running with `vllm==0.8.2`, `verl==0.2.0.dev0`, `torch==2.6.0`, the expandable segments do not work with the memory pool mechanism of vllm, which gives the following error:
+```bash
+Traceback (most recent call last):
+  File "/home/hazelye_google_com/github/code-r1/verl/trainer/main_ppo.py", line 25, in main
+    run_ppo(config)
+  File "/home/hazelye_google_com/github/code-r1/verl/trainer/main_ppo.py", line 33, in run_ppo
+    ray.get(main_task.remote(config, compute_score))
+  File "/opt/conda/envs/code/lib/python3.10/site-packages/ray/_private/auto_init_hook.py", line 21, in auto_init_wrapper
+    return fn(*args, **kwargs)
+  File "/opt/conda/envs/code/lib/python3.10/site-packages/ray/_private/client_mode_hook.py", line 103, in wrapper
+    return func(*args, **kwargs)
+  File "/opt/conda/envs/code/lib/python3.10/site-packages/ray/_private/worker.py", line 2771, in get
+    values, debugger_breakpoint = worker.get_objects(object_refs, timeout=timeout)
+  File "/opt/conda/envs/code/lib/python3.10/site-packages/ray/_private/worker.py", line 919, in get_objects
+    raise value.as_instanceof_cause()
+ray.exceptions.RayTaskError(AssertionError): ray::main_task() (pid=2537612, ip=10.138.0.2)
+  File "/home/hazelye_google_com/github/code-r1/verl/trainer/main_ppo.py", line 127, in main_task
+    trainer.init_workers()
+  File "/home/hazelye_google_com/github/code-r1/verl/trainer/ppo/ray_trainer.py", line 757, in init_workers
+    self.actor_rollout_wg.init_model()
+  File "/home/hazelye_google_com/github/code-r1/verl/single_controller/ray/base.py", line 42, in func
+    output = ray.get(output)
+ray.exceptions.RayTaskError(AssertionError): ray::WorkerDict.actor_rollout_init_model() (pid=2538987, ip=10.138.0.2, actor_id=6025581de22f7b458fe8e20001000000, repr=<verl.single_controller.ray.base.WorkerDict object at 0x7f6aed92a440>)
+  File "/home/hazelye_google_com/github/code-r1/verl/single_controller/ray/base.py", line 399, in func
+    return getattr(self.worker_dict[key], name)(*args, **kwargs)
+  File "/home/hazelye_google_com/github/code-r1/verl/single_controller/base/decorator.py", line 404, in inner
+    return func(*args, **kwargs)
+  File "/home/hazelye_google_com/github/code-r1/verl/workers/fsdp_workers.py", line 390, in init_model
+    self.rollout, self.rollout_sharding_manager = self._build_rollout()
+  File "/home/hazelye_google_com/github/code-r1/verl/workers/fsdp_workers.py", line 325, in _build_rollout
+    rollout = vLLMRollout(model_path=local_path,
+  File "/home/hazelye_google_com/github/code-r1/verl/workers/rollout/vllm_rollout/vllm_rollout_spmd.py", line 100, in __init__
+    self.inference_engine = LLM(
+  File "/opt/conda/envs/code/lib/python3.10/site-packages/vllm/utils.py", line 1037, in inner
+    return fn(*args, **kwargs)
+  File "/opt/conda/envs/code/lib/python3.10/site-packages/vllm/entrypoints/llm.py", line 243, in __init__
+    self.llm_engine = LLMEngine.from_engine_args(
+  File "/opt/conda/envs/code/lib/python3.10/site-packages/vllm/engine/llm_engine.py", line 520, in from_engine_args
+    return engine_cls.from_vllm_config(
+  File "/opt/conda/envs/code/lib/python3.10/site-packages/vllm/engine/llm_engine.py", line 496, in from_vllm_config
+    return cls(
+  File "/opt/conda/envs/code/lib/python3.10/site-packages/vllm/engine/llm_engine.py", line 280, in __init__
+    self.model_executor = executor_class(vllm_config=vllm_config, )
+  File "/opt/conda/envs/code/lib/python3.10/site-packages/vllm/executor/executor_base.py", line 52, in __init__
+    self._init_executor()
+  File "/opt/conda/envs/code/lib/python3.10/site-packages/vllm/executor/uniproc_executor.py", line 122, in _init_executor
+    self.collective_rpc("load_model")
+  File "/opt/conda/envs/code/lib/python3.10/site-packages/vllm/executor/uniproc_executor.py", line 56, in collective_rpc
+    answer = run_method(self.driver_worker, method, args, kwargs)
+  File "/opt/conda/envs/code/lib/python3.10/site-packages/vllm/utils.py", line 2255, in run_method
+    return func(*args, **kwargs)
+  File "/opt/conda/envs/code/lib/python3.10/site-packages/vllm/worker/worker.py", line 174, in load_model
+    allocator = CuMemAllocator.get_instance()
+  File "/opt/conda/envs/code/lib/python3.10/site-packages/vllm/device_allocator/cumem.py", line 140, in get_instance
+    CuMemAllocator.instance = CuMemAllocator()
+  File "/opt/conda/envs/code/lib/python3.10/site-packages/vllm/device_allocator/cumem.py", line 145, in __init__
+    assert "expandable_segments:True" not in conf, \
+AssertionError: Expandable segments are not compatible with memory pool. Please track https://github.com/pytorch/pytorch/issues/147851 for the latest updates.
+```
+
+At this time, one can set the expandable segments to be False, and decrease the batch size. This will be good for about 140 epochs, then OOM again!
