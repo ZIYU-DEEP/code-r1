@@ -18,10 +18,14 @@ fi
 # - If you are short of VRAM, consider removing reference policy. To do so, you need to go to
 #    main_ppo.py:main_task - and comment "Role.RefPolicy..." in "role_worker_mapping = ".
 
-# MAIN CONFIG
-PROJECT_NAME=code-r1-12k-1epoch
-MAX_EPOCHS=1
+# PATHS AND NAMES
 DATASET=code-r1-12k-leetcode2k-taco
+PROJECT_NAME=code-r1-12k
+EXPERIMENT_NAME=1-epoch-off-checkpoint
+MODEL_LOCAL_DIR=./models/${EXPERIMENT_NAME}
+
+# MAIN CONFIG
+MAX_EPOCHS=1
 MODEL_PATH=Qwen/Qwen2.5-7B-Instruct-1M
 ROLLOUT_N_SAMPLE=16
 ROLLOUT_N_QUERY=16
@@ -76,9 +80,9 @@ python3 -m verl.trainer.main_ppo \
     trainer.critic_warmup=0 \
     trainer.logger=['wandb'] \
     trainer.project_name=${PROJECT_NAME} \
-    trainer.experiment_name=${DATASET}-grpo \
+    trainer.experiment_name=${EXPERIMENT_NAME} \
     trainer.nnodes=1 \
-    trainer.default_local_dir=./models/${DATASET}-grpo \
+    trainer.default_local_dir=${MODEL_LOCAL_DIR} \
     trainer.n_gpus_per_node=$GPUS_PER_NODE \
     trainer.save_freq=64 \
     trainer.test_freq=16 \
