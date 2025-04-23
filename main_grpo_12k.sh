@@ -19,9 +19,9 @@ fi
 #    main_ppo.py:main_task - and comment "Role.RefPolicy..." in "role_worker_mapping = ".
 
 # MAIN CONFIG
+PROJECT_NAME=code-r1-12k
 MAX_EPOCHS=8
-DATASET=code-r1-12k
-# DATASET=code-r1-2k-leetcode2k-taco
+DATASET=code-r1-12k-leetcode2k-taco
 MODEL_PATH=Qwen/Qwen2.5-7B-Instruct-1M
 ROLLOUT_N_SAMPLE=16
 ROLLOUT_N_QUERY=16
@@ -68,7 +68,7 @@ python3 -m verl.trainer.main_ppo \
     algorithm.kl_ctrl.kl_coef=0.001 \
     trainer.critic_warmup=0 \
     trainer.logger=['wandb'] \
-    trainer.project_name='code-r1' \
+    trainer.project_name=${PROJECT_NAME} \
     trainer.experiment_name=${DATASET}-grpo \
     trainer.nnodes=1 \
     trainer.default_local_dir=./models/${DATASET}-grpo \
