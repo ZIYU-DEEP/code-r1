@@ -156,9 +156,9 @@ conda install pytorch==2.4.0 torchvision==0.19.0 torchaudio==2.4.0 pytorch-cuda=
 ```
 Error executing job with overrides: ['algorithm.adv_estimator=grpo', 'data.train_files=data/code-r1-2k-leetcode2k-taco/train.parquet', 'data.val_files=data/code-r1-2k-leetcode2k-taco/test.parquet', 'data.train_batch_size=16', 'data.max_prompt_length=2048', 'data.max_response_length=4096', 'actor_rollout_ref.model.path=Qwen/Qwen2.5-7B-Instruct-1M', 'actor_rollout_ref.actor.optim.lr=5e-7', 'actor_rollout_ref.model.use_remove_padding=True', 'actor_rollout_ref.actor.ppo_mini_batch_size=256', 'actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=8', 'actor_rollout_ref.actor.use_kl_loss=True', 'actor_rollout_ref.actor.kl_loss_coef=0.001', 'actor_rollout_ref.actor.kl_loss_type=low_var_kl', 'actor_rollout_ref.model.enable_gradient_checkpointing=False', 'actor_rollout_ref.actor.fsdp_config.param_offload=False', 'actor_rollout_ref.actor.fsdp_config.optimizer_offload=False', 'actor_rollout_ref.rollout.log_prob_micro_batch_size=256', 'actor_rollout_ref.rollout.name=vllm', 'actor_rollout_ref.rollout.gpu_memory_utilization=0.5', 'actor_rollout_ref.rollout.n=16', 'actor_rollout_ref.ref.log_prob_micro_batch_size=256', 'actor_rollout_ref.ref.fsdp_config.param_offload=False', 'algorithm.kl_ctrl.kl_coef=0.001', 'trainer.critic_warmup=0', 'trainer.logger=[wandb]', 'trainer.project_name=code-r1', 'trainer.experiment_name=code-r1-2k-leetcode2k-taco-grpo', 'trainer.nnodes=1', 'trainer.default_local_dir=./models/code-r1-2k-leetcode2k-taco-grpo', 'trainer.n_gpus_per_node=8', 'trainer.save_freq=64', 'trainer.test_freq=16', 'trainer.total_epochs=8', 'reward_model.reward_manager=prime']
 Traceback (most recent call last):
-  File "/home/hazelye_google_com/github/code-r1/verl/trainer/main_ppo.py", line 25, in main
+  File "/home/***/github/code-r1/verl/trainer/main_ppo.py", line 25, in main
     run_ppo(config)
-  File "/home/hazelye_google_com/github/code-r1/verl/trainer/main_ppo.py", line 33, in run_ppo
+  File "/home/***/github/code-r1/verl/trainer/main_ppo.py", line 33, in run_ppo
     ray.get(main_task.remote(config, compute_score))
   File "/opt/conda/envs/code/lib/python3.10/site-packages/ray/_private/auto_init_hook.py", line 21, in auto_init_wrapper
     return fn(*args, **kwargs)
@@ -169,20 +169,20 @@ Traceback (most recent call last):
   File "/opt/conda/envs/code/lib/python3.10/site-packages/ray/_private/worker.py", line 906, in get_objects
     raise value.as_instanceof_cause()
 ray.exceptions.RayTaskError(OutOfMemoryError): ray::main_task() (pid=399789, ip=10.128.0.9)
-  File "/home/hazelye_google_com/github/code-r1/verl/trainer/main_ppo.py", line 128, in main_task
+  File "/home/***/github/code-r1/verl/trainer/main_ppo.py", line 128, in main_task
     trainer.fit()
-  File "/home/hazelye_google_com/github/code-r1/verl/trainer/ppo/ray_trainer.py", line 1004, in fit
+  File "/home/***/github/code-r1/verl/trainer/ppo/ray_trainer.py", line 1004, in fit
     actor_output = self.actor_rollout_wg.update_actor(batch)
-  File "/home/hazelye_google_com/github/code-r1/verl/single_controller/ray/base.py", line 42, in func
+  File "/home/***/github/code-r1/verl/single_controller/ray/base.py", line 42, in func
     output = ray.get(output)
 ray.exceptions.RayTaskError(OutOfMemoryError): ray::WorkerDict.actor_rollout_update_actor() (pid=400862, ip=10.128.0.9, actor_id=87523c02ec964b128fbc710001000000, repr=<verl.single_controller.ray.base.WorkerDict object at 0x7edde69d7850>)
-  File "/home/hazelye_google_com/github/code-r1/verl/single_controller/ray/base.py", line 399, in func
+  File "/home/***/github/code-r1/verl/single_controller/ray/base.py", line 399, in func
     return getattr(self.worker_dict[key], name)(*args, **kwargs)
-  File "/home/hazelye_google_com/github/code-r1/verl/single_controller/base/decorator.py", line 404, in inner
+  File "/home/***/github/code-r1/verl/single_controller/base/decorator.py", line 404, in inner
     return func(*args, **kwargs)
-  File "/home/hazelye_google_com/github/code-r1/verl/workers/fsdp_workers.py", line 435, in update_actor
+  File "/home/***/github/code-r1/verl/workers/fsdp_workers.py", line 435, in update_actor
     metrics = self.actor.update_policy(data=data)
-  File "/home/hazelye_google_com/github/code-r1/verl/workers/actor/dp_actor.py", line 313, in update_policy
+  File "/home/***/github/code-r1/verl/workers/actor/dp_actor.py", line 313, in update_policy
     loss.backward()
   File "/opt/conda/envs/code/lib/python3.10/site-packages/torch/_tensor.py", line 521, in backward
     torch.autograd.backward(
@@ -193,4 +193,9 @@ ray.exceptions.RayTaskError(OutOfMemoryError): ray::WorkerDict.actor_rollout_upd
 torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 2.16 GiB. GPU 0 has a total capacity of 79.10 GiB of which 1.63 GiB is free. Including non-PyTorch memory, this process has 77.42 GiB memory in use. Of the allocated memory 68.16 GiB is allocated by PyTorch, and 3.49 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
 
 Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
+```
+
+Potential fix:
+```bash
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 ```
