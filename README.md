@@ -21,6 +21,12 @@ pip install flash-attn --no-build-isolation
 pip install wandb IPython matplotlib gpustat # utility
 ```
 
+Update:
+```bash
+pip install vllm==0.8.2
+pip install tensordict==0.6.2
+```
+
 ### Sandboxing
 
 I tried multiple ways for sandboxing including calling code execution servers, running dockerized Python, calling paid services, etc.
@@ -44,6 +50,12 @@ sudo apt-get install gawk -y
 chmod +x ./configure
 chmod +x src/man/mkman.sh
 ./configure && make && sudo make install-strip
+```
+
+Test the functionality of the sandbox:
+```bash
+python scripts/stress_exec.py
+python scripts/test_sandbox.py
 ```
 
 ### Datasets
