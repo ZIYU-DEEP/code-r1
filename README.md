@@ -289,6 +289,15 @@ AssertionError: Expandable segments are not compatible with memory pool. Please 
 
 At this time, one can set the expandable segments to be False, and decrease the batch size. This will be good for about 140 epochs, then OOM again!
 
+To solve this, we consider to reduce the memory by (i) **gradient checkpointing**: using GPU computation to save GPU memory and (ii) **param/optim offload**: using CPU memory to save GPU memory. Both will slow the training.
+```bash
+MODEL_ENABLE_GRADIENT_CHECKPOINTING=True  # TRUE: reduce memory by activation, increase computation time
+ACTOR_PARAM_OFFLOAD=FALSE  # TRUE: reduce memory, good for nvlink
+ACTOR_OPTIMIZER_OFFLOAD=True  # TRUE: reduce memory, good for nvlink
+REF_PARAM_OFFLOAD=FALSE  # TRUE: reduce memory, but not much
+VLLM_GPU_MEMORY_UTILIZATION=0.45
+```
+
 We thus set param and optimizer offloading to be true, as well as the gradient checkpointing, however, we got the following issue:
 ```
 (main_task pid=2582740) Check the documentation of torch.load to learn more about types accepted by default with weights_only https://pytorch.org/docs/stable/generated/torch.load.html.
