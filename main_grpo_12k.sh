@@ -20,8 +20,8 @@ fi
 
 # MAIN CONFIG
 MAX_EPOCHS=8
-# DATASET=code-r1-12k
-DATASET=code-r1-2k-leetcode2k-taco
+DATASET=code-r1-12k
+# DATASET=code-r1-2k-leetcode2k-taco
 MODEL_PATH=Qwen/Qwen2.5-7B-Instruct-1M
 ROLLOUT_N_SAMPLE=16
 ROLLOUT_N_QUERY=16

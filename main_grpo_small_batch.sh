@@ -1,6 +1,7 @@
 #!/bin/bash
 # The config is optimized for 8xH200
 set -x
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 if [ -z "$CUDA_VISIBLE_DEVICES" ]; then
     GPUS_PER_NODE=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
