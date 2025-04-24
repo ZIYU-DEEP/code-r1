@@ -17,12 +17,18 @@ import re
 import os
 import torch
 import argparse
-from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForTokenClassification, AutoModelForVision2Seq
+from transformers import (
+    AutoConfig,
+    AutoModelForCausalLM,
+    AutoModelForTokenClassification,
+    AutoModelForVision2Seq,
+)
 from concurrent.futures import ThreadPoolExecutor
 from torch.distributed._tensor import DTensor, Shard, Placement
 
 import json
 from examples.data_preprocess.coder1 import SYSTEM_PROMPT
+
 
 def rewrite_chat_template(model_path: str):
     with open(os.path.join(model_path, 'tokenizer_config.json'), 'r') as f:
@@ -89,6 +95,7 @@ def rewrite_chat_template(model_path: str):
     with open(os.path.join(model_path, 'tokenizer_config.json'), 'w') as f:
         json.dump(tokenizer_config, f, indent=2)
 
+
 def merge_by_placement(tensors: List[torch.Tensor], placement: Placement):
     if placement.is_replicate():
         return tensors[0]
@@ -103,8 +110,10 @@ def merge_by_placement(tensors: List[torch.Tensor], placement: Placement):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--local_dir', required=True, type = str, help="The path for your saved model")
-    parser.add_argument("--hf_upload_path", default=False, type = str, help="The path of the huggingface repo to upload")
+    parser.add_argument('--local_dir', required=True, type = str, 
+                        help="The path for your saved model")
+    parser.add_argument("--hf_upload_path", default=False, type = str, 
+                        help="The path of the huggingface repo to upload")
     args = parser.parse_args()
 
     assert not args.local_dir.endswith("huggingface"), "The local_dir should not end with huggingface"
@@ -122,10 +131,17 @@ if __name__ == '__main__':
             break
     assert world_size, "No model file with the proper format"
 
-    state_dict = torch.load(os.path.join(local_dir, f'model_world_size_{world_size}_rank_{rank}.pt'), map_location='cpu')
+    # Load the state dict from rank 0
+    print(f'Loading model from {local_dir}, world_size {world_size}, rank {rank}')
+    state_dict = torch.load(
+        os.path.join(local_dir, f'model_world_size_{world_size}_rank_{rank}.pt'), 
+        map_location='cpu'
+    )
     pivot_key = sorted(list(state_dict.keys()))[0]
     weight = state_dict[pivot_key]
+    
     assert isinstance(weight, torch.distributed._tensor.DTensor)
+    
     # get sharding info
     device_mesh = weight.device_mesh
     mesh = device_mesh.mesh
@@ -154,13 +170,18 @@ if __name__ == '__main__':
 
     def process_one_shard(rank):
         model_path = os.path.join(local_dir, f'model_world_size_{world_size}_rank_{rank}.pt')
-        state_dict = torch.load(model_path, map_location='cpu', weights_only=False)
+        state_dict = torch.load(
+            model_path, 
+            map_location='cpu', 
+            weights_only=False
+        )
         model_state_dict_lst[rank] = state_dict
         return state_dict
 
     with ThreadPoolExecutor(max_workers=min(32, os.cpu_count())) as executor:
         for rank in range(1, total_shards):
             executor.submit(process_one_shard, rank)
+            
     state_dict = {}
     param_placements: Dict[str, List[Placement]] = {}
     keys = set(model_state_dict_lst[0].keys())
