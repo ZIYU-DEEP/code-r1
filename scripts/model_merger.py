@@ -18,7 +18,29 @@ except ImportError:
     from torch.distributed._tensor import DTensor
 
 import torch
-torch.serialization.add_safe_globals([DTensor])
+
+import pickle
+
+# Ensure we always use the correct DTensor reference
+try:
+    from torch.distributed._tensor.api import DTensor as CurrentDTensor
+except ImportError:
+    from torch.distributed._tensor import DTensor as CurrentDTensor
+
+class RedirectDTensorUnpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        if name == 'DTensor' and module in [
+            'torch.distributed._tensor',
+            'torch.distributed.tensor',
+            'torch.distributed._tensor.api'
+        ]:
+            return CurrentDTensor
+        return super().find_class(module, name)
+
+def safe_torch_load(path):
+    with open(path, 'rb') as f:
+        return RedirectDTensorUnpickler(f).load()
+
 
 from typing import List, Tuple, Dict
 import re
@@ -27,7 +49,7 @@ import os
 import argparse
 from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForTokenClassification, AutoModelForVision2Seq
 from concurrent.futures import ThreadPoolExecutor
-from torch.distributed._tensor import DTensor, Shard, Placement
+from torch.distributed._tensor import Shard, Placement
 
 
 import json
@@ -131,9 +153,10 @@ if __name__ == '__main__':
             break
     assert world_size, "No model file with the proper format"
 
-    state_dict = torch.load(
-        os.path.join(local_dir, f'model_world_size_{world_size}_rank_{rank}.pt'), map_location='cpu',
-        weights_only=False,
+    state_dict = safe_torch_load(
+        os.path.join(local_dir, f'model_world_size_{world_size}_rank_{rank}.pt'), 
+        # map_location='cpu',
+        # weights_only=False,
     )
     pivot_key = sorted(list(state_dict.keys()))[0]
     weight = state_dict[pivot_key]
@@ -166,10 +189,10 @@ if __name__ == '__main__':
 
     def process_one_shard(rank):
         model_path = os.path.join(local_dir, f'model_world_size_{world_size}_rank_{rank}.pt')
-        state_dict = torch.load(
+        state_dict = safe_torch_load(
             model_path, 
-            map_location='cpu', 
-            weights_only=False,
+            # map_location='cpu', 
+            # weights_only=False,
         )
         model_state_dict_lst[rank] = state_dict
         return state_dict
