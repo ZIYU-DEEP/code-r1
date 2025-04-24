@@ -19,13 +19,13 @@ fi
 #    main_ppo.py:main_task - and comment "Role.RefPolicy..." in "role_worker_mapping = ".
 
 # PATHS AND NAMES
-DATASET=leetcode2k
 PROJECT_NAME=code-r1-2k
-EXPERIMENT_NAME=1-epoch-off-checkpoint
-MODEL_LOCAL_DIR=./models/${EXPERIMENT_NAME}
+DATASET=leetcode2k
+EXPERIMENT_NAME=10-epoch
+MODEL_LOCAL_DIR=./models/${DATASET}-${EXPERIMENT_NAME}
 
 # MAIN CONFIG
-MAX_EPOCHS=1
+MAX_EPOCHS=10
 MODEL_PATH=Qwen/Qwen2.5-7B-Instruct-1M
 ROLLOUT_N_SAMPLE=16
 ROLLOUT_N_QUERY=16
@@ -84,7 +84,7 @@ python3 -m verl.trainer.main_ppo \
     trainer.nnodes=1 \
     trainer.default_local_dir=${MODEL_LOCAL_DIR} \
     trainer.n_gpus_per_node=$GPUS_PER_NODE \
-    trainer.save_freq=64 \
+    trainer.save_freq=32 \
     trainer.test_freq=16 \
     trainer.total_epochs=$MAX_EPOCHS \
     reward_model.reward_manager=prime $@ 2>&1 | tee grpo.log
