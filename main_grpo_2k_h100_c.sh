@@ -52,6 +52,12 @@ fi
 
 export VLLM_ATTENTION_BACKEND=XFORMERS
 
+# SET THE LOGDIR
+LOG_DIR=logs/${EXPERIMENT_NAME}
+mkdir -p ${LOG_DIR}
+TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+LOG_FILE=${LOG_DIR}/${TIMESTAMP}.log
+
 python3 -m verl.trainer.main_ppo \
     algorithm.adv_estimator=grpo \
     data.train_files=data/$DATASET/train.parquet \
@@ -87,4 +93,4 @@ python3 -m verl.trainer.main_ppo \
     trainer.save_freq=32 \
     trainer.test_freq=16 \
     trainer.total_epochs=$MAX_EPOCHS \
-    reward_model.reward_manager=prime $@ 2>&1 | tee grpo.log
+    reward_model.reward_manager=prime $@ 2>&1 | tee ${LOG_FILE}
