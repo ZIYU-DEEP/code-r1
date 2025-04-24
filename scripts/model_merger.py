@@ -12,14 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+try:
+    from torch.distributed.tensor import DTensor
+except ImportError:
+    from torch.distributed._tensor import DTensor
+
+import torch
+torch.serialization.add_safe_globals({'DTensor': DTensor})
+
 from typing import List, Tuple, Dict
 import re
 import os
-import torch
+# import torch
 import argparse
 from transformers import AutoConfig, AutoModelForCausalLM, AutoModelForTokenClassification, AutoModelForVision2Seq
 from concurrent.futures import ThreadPoolExecutor
 from torch.distributed._tensor import DTensor, Shard, Placement
+
+
+
 
 import json
 from examples.data_preprocess.coder1 import SYSTEM_PROMPT
@@ -108,7 +119,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     assert not args.local_dir.endswith("huggingface"), "The local_dir should not end with huggingface"
-    local_dir = args.local_dir
+    local_dir = args.local_dirfz
 
     rewrite_chat_template(os.path.join(local_dir, 'huggingface'))
 
