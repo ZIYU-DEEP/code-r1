@@ -18,7 +18,7 @@ except ImportError:
     from torch.distributed._tensor import DTensor
 
 import torch
-torch.serialization.add_safe_globals({'DTensor': DTensor})
+torch.serialization.add_safe_globals([DTensor])
 
 from typing import List, Tuple, Dict
 import re
