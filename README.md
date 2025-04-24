@@ -297,3 +297,17 @@ ACTOR_OPTIMIZER_OFFLOAD=True  # TRUE: reduce memory, good for nvlink
 REF_PARAM_OFFLOAD=FALSE  # TRUE: reduce memory, but not much
 VLLM_GPU_MEMORY_UTILIZATION=0.45
 ```
+
+Upload models:
+```bash
+(a1) karl:~/github/code-r1/models/1-epoch-off-checkpoint/global_step_64/actor$ ls
+extra_state_world_size_8_rank_0.pt  extra_state_world_size_8_rank_5.pt  model_world_size_8_rank_1.pt  model_world_size_8_rank_6.pt  optim_world_size_8_rank_3.pt
+extra_state_world_size_8_rank_1.pt  extra_state_world_size_8_rank_6.pt  model_world_size_8_rank_2.pt  model_world_size_8_rank_7.pt  optim_world_size_8_rank_4.pt
+extra_state_world_size_8_rank_2.pt  extra_state_world_size_8_rank_7.pt  model_world_size_8_rank_3.pt  optim_world_size_8_rank_0.pt  optim_world_size_8_rank_5.pt
+extra_state_world_size_8_rank_3.pt  huggingface                         model_world_size_8_rank_4.pt  optim_world_size_8_rank_1.pt  optim_world_size_8_rank_6.pt
+extra_state_world_size_8_rank_4.pt  model_world_size_8_rank_0.pt        model_world_size_8_rank_5.pt  optim_world_size_8_rank_2.pt  optim_world_size_8_rank_7.pt
+(a1) karl:~/github/code-r1/models/1-epoch-off-checkpoint/global_step_64/actor$ cd huggingface/
+(a1) karl:~/github/code-r1/models/1-epoch-off-checkpoint/global_step_64/actor/huggingface$ ls
+added_tokens.json  config.json  merges.txt  special_tokens_map.json  tokenizer.json  tokenizer_config.json  vocab.json
+(a1) karl:~/github/code-r1/models/1-epoch-off-checkpoint/global_step_64/actor/huggingface$ 
+```
