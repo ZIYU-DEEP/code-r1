@@ -30,8 +30,6 @@ from concurrent.futures import ThreadPoolExecutor
 from torch.distributed._tensor import DTensor, Shard, Placement
 
 
-
-
 import json
 from examples.data_preprocess.coder1 import SYSTEM_PROMPT
 
@@ -119,7 +117,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     assert not args.local_dir.endswith("huggingface"), "The local_dir should not end with huggingface"
-    local_dir = args.local_dirfz
+    local_dir = args.local_dir
 
     rewrite_chat_template(os.path.join(local_dir, 'huggingface'))
 
