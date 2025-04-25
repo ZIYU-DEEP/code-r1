@@ -208,6 +208,8 @@ def compute_advantage(
         data.batch['advantages'] = advantages
         data.batch['returns'] = returns
         
+    # TODO @cat-searcher: directly modify the compute advantage to apply info weights
+        
     else:
         raise NotImplementedError
     

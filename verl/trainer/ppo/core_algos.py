@@ -1,17 +1,3 @@
-# Copyright 2024 Bytedance Ltd. and/or its affiliates
-# Copyright 2022 The HuggingFace Team. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 """
 Core functions to implement PPO algorithms.
 The function implemented in this file should be used by trainer with different distributed strategies to
@@ -55,20 +41,29 @@ class FixedKLController:
 
 def get_kl_controller(config):
     if config.critic.kl_ctrl.type == 'fixed':
-        kl_ctrl = FixedKLController(kl_coef=config.critic.kl_ctrl.kl_coef)
+        kl_ctrl = FixedKLController(
+            kl_coef=config.critic.kl_ctrl.kl_coef
+        )
     elif config.critic.kl_ctrl.type == 'adaptive':
         assert config.kl_ctrl.horizon > 0, f'horizon must be larger than 0. Got {config.critic.kl_ctrl.horizon}'
-        kl_ctrl = AdaptiveKLController(init_kl_coef=config.critic.kl_ctrl.kl_coef,
-                                       target_kl=config.critic.kl_ctrl.target_kl,
-                                       horizon=config.critic.kl_ctrl.horizon)
+        kl_ctrl = AdaptiveKLController(
+            init_kl_coef=config.critic.kl_ctrl.kl_coef,
+            target_kl=config.critic.kl_ctrl.target_kl,
+            horizon=config.critic.kl_ctrl.horizon
+        )
     else:
         raise ValueError('Unknown kl_ctrl type')
 
     return kl_ctrl
 
 
-def compute_gae_advantage_return(token_level_rewards: torch.Tensor, values: torch.Tensor, eos_mask: torch.Tensor,
-                                 gamma: torch.Tensor, lam: torch.Tensor):
+def compute_gae_advantage_return(
+    token_level_rewards: torch.Tensor, 
+    values: torch.Tensor, 
+    eos_mask: torch.Tensor,
+    gamma: torch.Tensor, 
+    lam: torch.Tensor
+):
     """Adapted from https://github.com/huggingface/trl/blob/main/trl/trainer/ppo_trainer.py
 
     Args:
@@ -108,10 +103,12 @@ def compute_gae_advantage_return(token_level_rewards: torch.Tensor, values: torc
 
 
 # NOTE(sgm): this implementation only consider outcome supervision, where the reward is a scalar.
-def compute_grpo_outcome_advantage(token_level_rewards: torch.Tensor,
-                                   eos_mask: torch.Tensor,
-                                   index: torch.Tensor,
-                                   epsilon: float = 1e-6):
+def compute_grpo_outcome_advantage(
+    token_level_rewards: torch.Tensor,
+    eos_mask: torch.Tensor,
+    index: torch.Tensor,
+    epsilon: float = 1e-6
+):
     """
     Compute advantage for GRPO, operating only on Outcome reward 
     (with only one scalar reward for each response).
@@ -154,10 +151,12 @@ def compute_grpo_outcome_advantage(token_level_rewards: torch.Tensor,
     return scores, scores
 
 
-def compute_rloo_outcome_advantage(token_level_rewards: torch.Tensor,
-                                   eos_mask: torch.Tensor,
-                                   index: torch.Tensor,
-                                   epsilon: float = 1e-6):
+def compute_rloo_outcome_advantage(
+    token_level_rewards: torch.Tensor,
+    eos_mask: torch.Tensor,
+    index: torch.Tensor,
+    epsilon: float = 1e-6
+):
     """
     Compute advantage for RLOO based on https://arxiv.org/abs/2402.14740
     Args:
@@ -199,8 +198,11 @@ def compute_rloo_outcome_advantage(token_level_rewards: torch.Tensor,
     return scores, scores
 
 
-def compute_reinforce_plus_plus_outcome_advantage(token_level_rewards: torch.Tensor, eos_mask: torch.Tensor,
-                                                  gamma: torch.Tensor):
+def compute_reinforce_plus_plus_outcome_advantage(
+    token_level_rewards: torch.Tensor, 
+    eos_mask: torch.Tensor,
+    gamma: torch.Tensor
+):
     """
     Compute advantage for REINFORCE++. 
     This implementation is based on the paper: https://arxiv.org/abs/2501.03262
@@ -233,8 +235,11 @@ def compute_reinforce_plus_plus_outcome_advantage(token_level_rewards: torch.Ten
     return advantages, returns
 
 
-def compute_remax_outcome_advantage(token_level_rewards: torch.Tensor, reward_baselines: torch.Tensor,
-                                    eos_mask: torch.Tensor):
+def compute_remax_outcome_advantage(
+    token_level_rewards: torch.Tensor, 
+    reward_baselines: torch.Tensor,
+    eos_mask: torch.Tensor
+):
     """
     Compute advantage for ReMax, operating only on Outcome reward 
     This implementation is based on the paper: https://arxiv.org/abs/2310.10505
@@ -348,7 +353,10 @@ def compute_value_loss(vpreds, returns, values, eos_mask, cliprange_value):
     return vf_loss, vf_clipfrac
 
 
-def kl_penalty(logprob: torch.FloatTensor, ref_logprob: torch.FloatTensor, kl_penalty) -> torch.FloatTensor:
+def kl_penalty(
+    logprob: torch.FloatTensor, 
+    ref_logprob: torch.FloatTensor, kl_penalty
+) -> torch.FloatTensor:
     """Compute KL divergence given logprob and ref_logprob.
     Copied from https://github.com/huggingface/trl/blob/main/trl/trainer/ppo_trainer.py#L1104
 
