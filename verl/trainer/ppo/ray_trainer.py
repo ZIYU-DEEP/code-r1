@@ -1,16 +1,3 @@
-# Copyright 2024 Bytedance Ltd. and/or its affiliates
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 """
 FSDP PPO Trainer with Ray-based single controller.
 This trainer supports model-agonistic model initialization with huggingface
@@ -70,8 +57,7 @@ class AdvantageEstimator(str, Enum):
 @dataclass
 class ResourcePoolManager:
     """
-    Define a resource pool specification. Resource pool will be initialized first.
-    Mapping
+    Define a resource pool specification. Resource pool will be initialized first.å
     """
     resource_pool_spec: dict[str, list[int]]
     mapping: dict[Role, str]
@@ -82,10 +68,12 @@ class ResourcePoolManager:
             # max_colocate_count means the number of WorkerGroups (i.e. processes) in each RayResourcePool
             # For FSDP backend, we recommend using max_colocate_count=1 that merge all WorkerGroups into one.
             # For Megatron backend, we recommend using max_colocate_count>1 that can utilize different WorkerGroup for differnt models
-            resource_pool = RayResourcePool(process_on_nodes=process_on_nodes,
-                                            use_gpu=True,
-                                            max_colocate_count=1,
-                                            name_prefix=resource_pool_name)
+            resource_pool = RayResourcePool(
+                process_on_nodes=process_on_nodes,
+                use_gpu=True,
+                max_colocate_count=1,
+                name_prefix=resource_pool_name,
+            )
             self.resource_pool_dict[resource_pool_name] = resource_pool
 
     def get_resource_pool(self, role: Role) -> RayResourcePool:
@@ -97,7 +85,11 @@ import torch
 from verl.utils.torch_functional import masked_mean
 
 
-def apply_kl_penalty(data: DataProto, kl_ctrl: core_algos.AdaptiveKLController, kl_penalty='kl'):
+def apply_kl_penalty(
+    data: DataProto, 
+    kl_ctrl: core_algos.AdaptiveKLController, 
+    kl_penalty='kl'
+):
     responses = data.batch['responses']
     response_length = responses.size(1)
     token_level_scores = data.batch['token_level_scores']
@@ -129,9 +121,13 @@ def apply_kl_penalty(data: DataProto, kl_ctrl: core_algos.AdaptiveKLController, 
     return data, metrics
 
 
-def compute_advantage(data: DataProto, adv_estimator, gamma=1.0, lam=1.0, num_repeat=1):
-    # prepare response group
-    # TODO: add other ways to estimate advantages
+def compute_advantage(
+    data: DataProto, 
+    adv_estimator, 
+    gamma=1.0, 
+    lam=1.0, 
+    num_repeat=1
+):
     if adv_estimator == AdvantageEstimator.GAE:
         values = data.batch['values']
         responses = data.batch['responses']
@@ -139,13 +135,16 @@ def compute_advantage(data: DataProto, adv_estimator, gamma=1.0, lam=1.0, num_re
         attention_mask = data.batch['attention_mask']
         response_mask = attention_mask[:, -response_length:]
         token_level_rewards = data.batch['token_level_rewards']
-        advantages, returns = core_algos.compute_gae_advantage_return(token_level_rewards=token_level_rewards,
-                                                                      values=values,
-                                                                      eos_mask=response_mask,
-                                                                      gamma=gamma,
-                                                                      lam=lam)
+        advantages, returns = core_algos.compute_gae_advantage_return(
+            token_level_rewards=token_level_rewards,
+            values=values,
+            eos_mask=response_mask,
+            gamma=gamma,
+            lam=lam
+        )
         data.batch['advantages'] = advantages
         data.batch['returns'] = returns
+        
     elif adv_estimator == AdvantageEstimator.GRPO:
         token_level_rewards = data.batch['token_level_rewards']
         index = data.non_tensor_batch['uid']
@@ -153,11 +152,14 @@ def compute_advantage(data: DataProto, adv_estimator, gamma=1.0, lam=1.0, num_re
         response_length = responses.size(-1)
         attention_mask = data.batch['attention_mask']
         response_mask = attention_mask[:, -response_length:]
-        advantages, returns = core_algos.compute_grpo_outcome_advantage(token_level_rewards=token_level_rewards,
-                                                                        eos_mask=response_mask,
-                                                                        index=index)
+        advantages, returns = core_algos.compute_grpo_outcome_advantage(
+            token_level_rewards=token_level_rewards,
+            eos_mask=response_mask,
+            index=index
+        )
         data.batch['advantages'] = advantages
         data.batch['returns'] = returns
+        
     elif adv_estimator == AdvantageEstimator.REINFORCE_PLUS_PLUS:
         token_level_rewards = data.batch['token_level_rewards']
         responses = data.batch['responses']
@@ -165,9 +167,13 @@ def compute_advantage(data: DataProto, adv_estimator, gamma=1.0, lam=1.0, num_re
         attention_mask = data.batch['attention_mask']
         response_mask = attention_mask[:, -response_length:]
         advantages, returns = core_algos.compute_reinforce_plus_plus_outcome_advantage(
-            token_level_rewards=token_level_rewards, eos_mask=response_mask, gamma=gamma)
+            token_level_rewards=token_level_rewards, 
+            eos_mask=response_mask, 
+            gamma=gamma
+        )
         data.batch['advantages'] = advantages
         data.batch['returns'] = returns
+        
     elif adv_estimator == AdvantageEstimator.REMAX:
         token_level_rewards = data.batch['token_level_rewards']
         index = data.non_tensor_batch['uid']
@@ -178,12 +184,15 @@ def compute_advantage(data: DataProto, adv_estimator, gamma=1.0, lam=1.0, num_re
 
         reward_baselines = data.batch['reward_baselines']
 
-        advantages, returns = core_algos.compute_remax_outcome_advantage(token_level_rewards=token_level_rewards,
-                                                                         reward_baselines=reward_baselines,
-                                                                         eos_mask=response_mask)
+        advantages, returns = core_algos.compute_remax_outcome_advantage(
+            token_level_rewards=token_level_rewards,
+            reward_baselines=reward_baselines,
+            eos_mask=response_mask
+        )
 
         data.batch['advantages'] = advantages
         data.batch['returns'] = returns
+        
     elif adv_estimator == AdvantageEstimator.RLOO:
         token_level_rewards = data.batch['token_level_rewards']
         index = data.non_tensor_batch['uid']
@@ -191,13 +200,17 @@ def compute_advantage(data: DataProto, adv_estimator, gamma=1.0, lam=1.0, num_re
         response_length = responses.size(-1)
         attention_mask = data.batch['attention_mask']
         response_mask = attention_mask[:, -response_length:]
-        advantages, returns = core_algos.compute_rloo_outcome_advantage(token_level_rewards=token_level_rewards,
-                                                                        eos_mask=response_mask,
-                                                                        index=index)
+        advantages, returns = core_algos.compute_rloo_outcome_advantage(
+            token_level_rewards=token_level_rewards,
+            eos_mask=response_mask,
+            index=index
+        )
         data.batch['advantages'] = advantages
         data.batch['returns'] = returns
+        
     else:
         raise NotImplementedError
+    
     return data
 
 
