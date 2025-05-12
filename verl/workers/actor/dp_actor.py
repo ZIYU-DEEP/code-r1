@@ -229,9 +229,17 @@ class DataParallelPPOActor(BasePPOActor):
 
         temperature = data.meta_info['temperature']  # temperature must be in the data.meta_info to avoid slient error
 
-        select_keys = ['responses', 'input_ids', 'attention_mask', 'position_ids', 'old_log_probs', 'advantages']
+        select_keys = [
+            'responses', 
+            'input_ids', 
+            'attention_mask', 
+            'position_ids', 
+            'old_log_probs', 
+            'advantages'
+        ]
         if self.config.use_kl_loss:
             select_keys.append('ref_log_prob')
+            
         batch = data.select(batch_keys=select_keys).batch
         has_multi_modal_inputs = 'multi_modal_inputs' in data.non_tensor_batch.keys()
 
@@ -285,13 +293,20 @@ class DataParallelPPOActor(BasePPOActor):
                         temperature=temperature
                     )
 
-                    pg_loss, pg_clipfrac, ppo_kl = core_algos.compute_policy_loss(old_log_prob=old_log_prob,
-                                                                                  log_prob=log_prob,
-                                                                                  advantages=advantages,
-                                                                                  eos_mask=response_mask,
-                                                                                  cliprange=clip_ratio)
+                    # compute pg loss from log_prob and advantages
+                    pg_loss, pg_clipfrac, ppo_kl = core_algos.compute_policy_loss(
+                        old_log_prob=old_log_prob,
+                        log_prob=log_prob,
+                        advantages=advantages,
+                        eos_mask=response_mask,
+                        cliprange=clip_ratio,
+                    )
+                    
                     # compute entropy loss from entropy
-                    entropy_loss = verl_F.masked_mean(entropy, response_mask)
+                    entropy_loss = verl_F.masked_mean(
+                        entropy, 
+                        response_mask
+                    )
 
                     # compute policy loss
                     policy_loss = pg_loss - entropy_loss * entropy_coeff
@@ -299,9 +314,11 @@ class DataParallelPPOActor(BasePPOActor):
                     if self.config.use_kl_loss:
                         ref_log_prob = data['ref_log_prob']
                         # compute kl loss
-                        kld = core_algos.kl_penalty(logprob=log_prob,
-                                                    ref_logprob=ref_log_prob,
-                                                    kl_penalty=self.config.kl_loss_type)
+                        kld = core_algos.kl_penalty(
+                            logprob=log_prob,
+                            ref_logprob=ref_log_prob,
+                            kl_penalty=self.config.kl_loss_type,
+                        )
                         kl_loss = masked_mean(kld, response_mask)
 
                         policy_loss = policy_loss + kl_loss * self.config.kl_loss_coef
@@ -326,5 +343,7 @@ class DataParallelPPOActor(BasePPOActor):
                 grad_norm = self._optimizer_step()
                 data = {'actor/grad_norm': grad_norm.detach().item()}
             append_to_dict(metrics, data)
+            
         self.actor_optimizer.zero_grad()
+        
         return metrics
