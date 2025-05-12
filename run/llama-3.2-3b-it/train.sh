@@ -10,14 +10,14 @@ else
 fi
 
 # PATHS AND NAMES
+MODEL_PATH=meta-llama/Llama-3.2-3B-Instruct
+EXPERIMENT_NAME=qwen-2.5-3b-it-10-epoch
 PROJECT_NAME=code-r1-leetcode-2k
 DATASET=leetcode2k
-EXPERIMENT_NAME=10-epoch
 MODEL_LOCAL_DIR=./models/${PROJECT_NAME}-${EXPERIMENT_NAME}
 
 # MAIN CONFIG
 MAX_EPOCHS=10
-MODEL_PATH=Qwen/Qwen2.5-7B-Instruct-1M
 ROLLOUT_N_SAMPLE=16
 ROLLOUT_N_QUERY=16
 MICRO_BATCH_PER_GPU=4 # * GPUS_PER_NODE -> GLOBAL_BATCH_SIZE
@@ -27,7 +27,7 @@ GLOBAL_BATCH_SIZE=$(($(($GPUS_PER_NODE * $MICRO_BATCH_PER_GPU)) * $GRAD_ACC_STEP
 # MEMORY RELATED CONFIGS (set all to FALSE for faster training if you have enough memory)
 MODEL_ENABLE_GRADIENT_CHECKPOINTING=True  # TRUE: reduce memory by activation, increase computation time
 ACTOR_PARAM_OFFLOAD=FALSE  # TRUE: reduce memory, good for nvlink
-ACTOR_OPTIMIZER_OFFLOAD=True  # TRUE: reduce memory, good for nvlink
+ACTOR_OPTIMIZER_OFFLOAD=False  # TRUE: reduce memory, good for nvlink
 REF_PARAM_OFFLOAD=FALSE  # TRUE: reduce memory, but not much
 VLLM_GPU_MEMORY_UTILIZATION=0.45
 
@@ -81,7 +81,7 @@ python3 -m verl.trainer.main_ppo \
     trainer.nnodes=1 \
     trainer.default_local_dir=${MODEL_LOCAL_DIR} \
     trainer.n_gpus_per_node=$GPUS_PER_NODE \
-    trainer.save_freq=32 \
+    trainer.save_freq=64 \
     trainer.test_freq=16 \
     trainer.total_epochs=$MAX_EPOCHS \
     reward_model.reward_manager=prime $@ 2>&1 | tee ${LOG_FILE}
